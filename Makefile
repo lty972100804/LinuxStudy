@@ -1,5 +1,4 @@
 #KERNELDIR := /home/lty/work/linux_study/linux-5.8.5
-######################################################
 
 KERNELDIR := /lib/modules/$(shell uname -r)/build
 
