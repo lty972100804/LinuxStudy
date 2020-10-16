@@ -3,6 +3,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*
  *
@@ -16,6 +18,7 @@ int main(int argc, char *argv[])
 	int fd = 0;
 	char *filename = NULL;
 	char readbuf[100], writebuf[100] = "hello world!";
+	char userdata[] = {"user data"};
 
 	if (argc != 3) {
 		printf("Error usage!\n");
@@ -31,22 +34,25 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	/* read */
-	ret = read(fd, readbuf, 50);
-	if (ret < 0) {
-		printf("read file %s failed\n", filename);
+	if (atoi(argv[2]) == 1) {
+		/* read */
+		ret = read(fd, readbuf, 50);
+		if (ret < 0) {
+			printf("read file %s failed\n", filename);
+			} else {
+				printf("APP read data:%s\n", readbuf);
+			}
 	}
-	else {
 
-	}
-
-	/* write */
-	ret = write(fd, writebuf, 50);
-	if (ret < 0) {
-		printf("write file %s failed\n", filename);
-	}
-	else {
-
+	if (atoi(argv[2]) == 2) {
+		memcpy(writebuf, userdata, sizeof(userdata));
+		/* write */
+		ret = write(fd, writebuf, 50);
+		if (ret < 0) {
+			printf("write file %s failed\n", filename);
+		} else {
+			printf("APP write data:%s\n", writebuf);
+		}
 	}
 
 	/* close */
