@@ -42,12 +42,14 @@ struct newchrled_dev newchrled;
 
 static int newchrled_open(struct inode *inode, struct file *filp)
 {
+	filp->private_data = &newchrled;
 	printk("newchrled open\n");
 	return 0;
 }
 
 static int newchrled_release(struct inode *inode, struct file *filp)
 {
+	struct newchrled_dev *dev = (struct newchrled_dev *)filp->private_data;
 	printk("newchrled release\n");
 	return 0;
 }
@@ -70,6 +72,7 @@ static int __init newchrled_init(void)
 	int ret = 0;
 	printk("newchrled init\n");
 
+	newchrled.major = 0;
 	if(newchrled.major) {
 		newchrled.devid = MKDEV(newchrled.major, 0);
 		ret = register_chrdev_region(newchrled.devid, NEWCHRLED_COUNT, NEWCHRLED_NAME);
@@ -80,35 +83,49 @@ static int __init newchrled_init(void)
 	}
 	if(ret < 0) {
 		printk("newchrled chrdev_region err!\n");
-		return -1;
+		goto fail_devid;
 	}
 	printk("newchrled major = %d, minor = %d\n", newchrled.major, newchrled.minor);
 
 	newchrled.cdev.owner = THIS_MODULE;
 	cdev_init(&newchrled.cdev, &newchrled_fops);
 	ret = cdev_add(&newchrled.cdev, newchrled.devid, NEWCHRLED_COUNT);
+	if (ret < 0) {
+		goto fail_cdev;
+	}
 
 	newchrled.class = class_create(THIS_MODULE, NEWCHRLED_NAME);
 	if (IS_ERR(newchrled.class)) {
-		return PTR_ERR(newchrled.class);
+		ret = PTR_ERR(newcheled.class);
+		goto fail_class;
 	}
 
 	newchrled.device = device_create(newchrled.class, NULL, newchrled.devid, 
 										NULL, NEWCHRLED_NAME);
 	if (IS_ERR(newchrled.device)) {
-		return PTR_ERR(newchrled.device);
+		ret = PTR_ERR(newchrled.device);
+		goto fail_device;
 	}
 	return 0;
+
+fail_device:
+	class_destroy(newchrled.class);
+fail_class:
+	cdev_del(&newchrled.cdev);
+fail_cdev:
+	unregister_chrdev_region(newchrled.devid, NEWCHRLED_COUNT);
+fail_devid:
+	return ret;
 }
 
 static void __exit newchrled_exit(void)
 {
 	printk("newchrled exit\n");
 
-	cdev_del(&newchrled.cdev);
-	unregister_chrdev_region(newchrled.devid, NEWCHRLED_COUNT);
 	device_destroy(newchrled.class, newchrled.devid);
 	class_destroy(newchrled.class);
+	cdev_del(&newchrled.cdev);
+	unregister_chrdev_region(newchrled.devid, NEWCHRLED_COUNT);
 }
 
 module_init(newchrled_init);
