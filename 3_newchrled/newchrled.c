@@ -96,7 +96,7 @@ static int __init newchrled_init(void)
 
 	newchrled.class = class_create(THIS_MODULE, NEWCHRLED_NAME);
 	if (IS_ERR(newchrled.class)) {
-		ret = PTR_ERR(newcheled.class);
+		ret = PTR_ERR(newchrled.class);
 		goto fail_class;
 	}
 
